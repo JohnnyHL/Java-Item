@@ -5,7 +5,7 @@
 * JDK版本： JDK 1.8.0_181
 * Spring Boot版本：2.1.8-RELEASE
 * Maven版本：3.6.3
-* Git版本：2.30.1
+* Git版本：2.30.1.windows.1
 
 **插件环境**
 * FastJson
@@ -14,11 +14,17 @@
 
 ```
 * 【1】：Java基础
+
 * 【2】：Java核心技术
+
 * 【3】：设计模式
+
 * 【4】：Git
+
 * 【5】：LetCode
+
 * 【6】：Maven
+
   
 .
 ├── README.md
@@ -56,4 +62,4 @@ If you have some questions after you see this article, you can contact me or you
 微信号：hl316839314
 Email：316839314@qq.com
 CSDN：https://blog.csdn.net/qq_27706119
-GitHub：https://github.com/JohnnyHL/Java-Item
+GitHub：https://github.com/JohnnyHL/Think-In-Java

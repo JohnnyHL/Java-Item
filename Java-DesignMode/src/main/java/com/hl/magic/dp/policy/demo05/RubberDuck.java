@@ -1,9 +1,9 @@
 package com.hl.magic.dp.policy.demo05;
 
-import com.dp.policy.demo04.Flayable;
-import com.dp.policy.demo04.Quackable;
+import com.hl.magic.dp.policy.demo04.Flayable;
+import com.hl.magic.dp.policy.demo04.Quackable;
 
-public class RubberDuck extends Duck implements Flayable,Quackable {
+public class RubberDuck extends Duck implements Flayable, Quackable {
     public RubberDuck() {
         quackBehavior = new Squeak();
         flyBehavior = new FlyNoWay();

@@ -13,12 +13,12 @@ public class Woman {
     /**
      * 丈夫
      */
-    public base.oop.character01.Man husband;
+    public Man husband;
 
     /**
      * 肯定也得结婚
      */
-    public void marry(base.oop.character01.Man man) {
+    public void marry(Man man) {
         this.husband = man;
     }
 }

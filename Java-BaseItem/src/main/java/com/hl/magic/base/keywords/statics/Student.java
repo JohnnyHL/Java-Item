@@ -38,6 +38,6 @@ public class Student {
         Student student = new Student();
         student.show();
         //通过类名调用Person类中的静态方法。
-        base.keywords.statics.Personce.run();
+        Personce.run();
     }
 }

@@ -1,6 +1,7 @@
 package com.hl.magic.dp.policy.demo05;
 
-import com.dp.policy.demo04.Flayable;
+
+import com.hl.magic.dp.policy.demo04.Flayable;
 
 /**
  * 红头鸭继承父类鸭子

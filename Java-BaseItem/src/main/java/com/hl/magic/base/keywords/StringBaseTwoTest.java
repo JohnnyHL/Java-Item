@@ -1,10 +1,9 @@
-package base.keywords;
+package com.hl.magic.base.keywords;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
@@ -38,11 +37,6 @@ public class StringBaseTwoTest {
         LOGGER.debug("=====>{}", getenv);
     }
 
-    @Test
-    public void dateTimeTest(){
-        String now = DateTimeUtils.getNow();
-        LOGGER.debug("=====>{}", now);
-    }
 
     @Test
     public void case11(){
@@ -50,10 +44,5 @@ public class StringBaseTwoTest {
         String pwd2 = "a1111111";
         String pwd3 = "A1111111";
         String pwd4 = "Aa111111";
-        boolean b = DateTimeUtils.checkPwd(pwd2);
-        LOGGER.debug("=====>{}", b);
-        if (!b) {
-            JOptionPane.showMessageDialog(null, "新口令须为数字+字母组合，长度为8的字符串");
-        }
     }
 }
