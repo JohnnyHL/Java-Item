@@ -1,0 +1,10 @@
+{
+  "name":"小明",
+  "age":25.2,
+  "birthday":19901010,
+  "car":null,
+  "house":null,
+  "major":["理发","挖掘机炒菜"],
+  "comment":"这是一个注释",
+  "status":0
+}

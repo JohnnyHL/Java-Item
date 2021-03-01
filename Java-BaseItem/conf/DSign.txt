@@ -1,0 +1,1569 @@
+package com.hl.magic.controller;
+
+import cn.com.jit.assp.css.client.*;
+import cn.com.jit.assp.css.client.util.CommUtil;
+import cn.com.jit.assp.css.client.util.HelperUtil;
+import cn.com.jit.assp.css.client.util.UtilTool;
+import cn.com.jit.assp.css.util.EnvelopResponseSet;
+import cn.com.jit.assp.css.util.PDFUtil;
+import cn.com.jit.assp.css.util.parser.EnvelopSimpResponseParser;
+import cn.com.jit.ida.util.pki.asn1.ASN1InputStream;
+import cn.com.jit.ida.util.pki.asn1.ASN1Sequence;
+import cn.com.jit.ida.util.pki.asn1.ASN1Set;
+import cn.com.jit.ida.util.pki.asn1.pkcs.pkcs7.ContentInfo;
+import cn.com.jit.ida.util.pki.asn1.pkcs.pkcs7.EnvelopedData;
+import cn.com.jit.ida.util.pki.asn1.pkcs.pkcs7.IssuerAndSerialNumber;
+import cn.com.jit.ida.util.pki.asn1.pkcs.pkcs7.RecipientInfo;
+import cn.com.jit.ida.util.pki.cipher.param.P7Param;
+import cn.com.jit.ida.util.pki.encoders.Base64;
+import cn.com.westone.common.array.ByteArrayUtil;
+import com.westone.finance.trade.entity.*;
+import com.westone.finance.trade.exception.NewCSSException;
+import com.westone.finance.trade.service.HsmTradeService;
+import com.westone.hsmapi.core.entity.HsmConfig;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.*;
+import java.security.SecureRandom;
+import java.util.*;
+
+public class DSign {
+
+    private static final Log LOGGER = LogFactory.getLog(DSign.class);
+    private static Config config = null;
+    private static boolean IS_INITED = false;
+    private long longErrCode = 0L;
+    private String strErrMsg = null;
+    private ResultSet rs = null;
+    private DSignClient dsclient = null;
+    private String digestAlgID = null;
+    private String plainData = "";
+    private byte[] plainByteData = null;
+    public byte[] bigPlainData = null;
+    private Config dsignConfig = null;
+    private String rndigestAlgID = "";
+    private byte[] filePlainData = null;
+    private String fileName = "";
+    private static final String VERSION_REQ_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><DSignContext Version =\"2.0\"><Request svcid=\"doDigest\"><ParaInfo><PlainText>cGxhaW5UZXh0VGVzdA==</PlainText><DigestALG>MD5</DigestALG></ParaInfo></Request></DSignContext>";
+
+    private static HsmTradeService hsmTradeService;
+    private static HsmConfig hsmConfig;
+
+    public static HsmTradeService getHsmTradeService() {
+        System.out.println("=============getHsmTradeService=============>" + DSign.hsmTradeService);
+        return DSign.hsmTradeService;
+    }
+
+    public static void setHsmTradeService() {
+        DSign.hsmTradeService = new HsmTradeService();
+    }
+
+    public static void setHsmTradeService(Config config) {
+        DSign.hsmConfig = HsmConfig.builder()
+                .ip(config.getWstServerIP())
+                .port(config.getWstServerPort())
+                .connectionType(config.getWstConnectionType())
+                .maxSize(config.getWstMaxSize())
+                .writeTimeout(config.getWstTimeout())
+                .connectTimeout(config.getWstConnectTimeout())
+                .requestLengthDomainSize(config.getWstRequestLengthDomainSize())
+                .responseLengthDomainSize(config.getWstResponseLengthDomainSize())
+                .build();
+        DSign.hsmTradeService = new HsmTradeService(hsmConfig);
+    }
+
+    public static void setHsmTradeService(HsmConfig hsmConfig) {
+        DSign.hsmTradeService = new HsmTradeService(hsmConfig);
+    }
+
+    public static void setHsmTradeService(String filePath) {
+        System.out.println("=============setHsmTradeService(String filePath)方法中，外传文件路径=============" + filePath);
+        try{
+            DSign.hsmTradeService = new HsmTradeService(filePath);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    public Config getDsignConfig() {
+        return this.dsignConfig;
+    }
+
+    public byte[] getPlainByteData() {
+        return this.plainByteData;
+    }
+
+    public void setPlainByteData(byte[] plainByteData) {
+        this.plainByteData = plainByteData;
+    }
+
+    public static void setIS_INITED(boolean is_inited) {
+        IS_INITED = is_inited;
+    }
+
+    public void setFilePlainData(byte[] filePlainData) {
+        this.filePlainData = filePlainData;
+    }
+
+    public byte[] getFilePlainData() {
+        return this.filePlainData;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileName() {
+        return this.fileName;
+    }
+
+    public String getPlainData() {
+        return this.plainData;
+    }
+
+    public void setPlainData(String plainData) {
+        this.plainData = plainData;
+    }
+
+    public static HsmConfig getHsmConfig() {
+        return hsmConfig;
+    }
+
+    public static void setHsmConfig(Config config) {
+        DSign.hsmConfig = HsmConfig.builder()
+                .ip(config.getWstServerIP())
+                .port(config.getWstServerPort())
+                .connectionType(config.getWstConnectionType())
+                .maxSize(config.getWstMaxSize())
+                .writeTimeout(config.getWstTimeout())
+                .connectTimeout(config.getWstConnectTimeout())
+                .requestLengthDomainSize(config.getWstRequestLengthDomainSize())
+                .responseLengthDomainSize(config.getWstResponseLengthDomainSize())
+                .build();
+        setHsmTradeService(hsmConfig);
+    }
+
+    public static Config getConfig() {
+        return config;
+    }
+
+    public static void setConfig(Config config) {
+        DSign.hsmConfig = HsmConfig.builder()
+                .ip(config.getWstServerIP())
+                .port(config.getWstServerPort())
+                .connectionType(config.getWstConnectionType())
+                .maxSize(config.getWstMaxSize())
+                .writeTimeout(config.getWstTimeout())
+                .connectTimeout(config.getWstConnectTimeout())
+                .requestLengthDomainSize(config.getWstRequestLengthDomainSize())
+                .responseLengthDomainSize(config.getWstResponseLengthDomainSize())
+                .build();
+        setHsmTradeService(hsmConfig);
+        config = config;
+    }
+
+    public DSign() {
+//        this.dsclient = new DSignClient();
+//        config = Config.getInstance();
+//        this.rs = new ResultSet();
+        System.out.println("=============构造一个DSign实例=============");
+        try{
+//            HsmTradeService hsmTradeService1 = getHsmTradeService();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 通过外传文件方式初始化
+     *
+     * @param filePath 外传文件路径
+     * @return
+     */
+    public static boolean init(String filePath) {
+        System.out.println("=============init()方法中，外传文件路径=============" + filePath);
+        if (filePath != null) {
+            System.out.println("=============init()方法中，filePath != null=============" + filePath);
+            setHsmTradeService(filePath);
+        } else {
+            LOGGER.error("errorMessageNumber: -10709974L errorMessage: 配置文件为空，初始化加载失败");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 初始化配置
+     *
+     * @param config
+     * @return
+     */
+    public static boolean init(Config config) {
+        if (config != null) {
+            DSign.hsmConfig = HsmConfig.builder()
+                    .ip(config.getWstServerIP())
+                    .port(config.getWstServerPort())
+                    .connectionType(config.getWstConnectionType())
+                    .maxSize(config.getWstMaxSize())
+                    .writeTimeout(config.getWstTimeout())
+                    .connectTimeout(config.getWstConnectTimeout())
+                    .requestLengthDomainSize(config.getWstRequestLengthDomainSize())
+                    .responseLengthDomainSize(config.getWstResponseLengthDomainSize())
+                    .build();
+            setHsmTradeService(hsmConfig);
+        } else {
+            LOGGER.error("errorMessageNumber: -10709975L errorMessage: 配置参数为空，初始化加载失败");
+            return false;
+        }
+        return true;
+    }
+
+    public long getErrorCode() {
+        return this.longErrCode;
+    }
+
+    public String getErrorMessage() {
+        return this.strErrMsg;
+    }
+
+    public long setAlgorithm(String strSignType, String strEncType) {
+        return 0L;
+    }
+
+    public String getData() {
+        return this.plainData;
+    }
+
+    public byte[] getByteData() {
+        return this.plainByteData;
+    }
+
+    public String getRndigestAlgID() {
+        return this.rndigestAlgID;
+    }
+
+    public byte[] generateRandom(int length, String retType) {
+        byte[] lreturnValue = null;
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        if (length < 1) {
+            this.longErrCode = -10002060L;
+            this.strErrMsg = "随机数长度要大于0！";
+            return lreturnValue;
+        } else {
+            try {
+                String strValue = this.dsclient.genRandom(length);
+                if (strValue == null || strValue.length() < 1) {
+                    this.longErrCode = -10002059L;
+                    this.strErrMsg = "获取随机数失败！";
+                    lreturnValue = null;
+                    return (byte[]) lreturnValue;
+                }
+
+                lreturnValue = Base64.decode(strValue);
+                if (retType != null && retType.equalsIgnoreCase("16")) {
+                    lreturnValue = HelperUtil.bytesToHexString(lreturnValue).getBytes();
+                }
+            } catch (CSSException var5) {
+                this.longErrCode = UtilTool.convertStr2Long(var5.getCode(), -10700000L);
+                this.strErrMsg = var5.getDescription();
+            }
+
+            return lreturnValue;
+        }
+    }
+
+    public String simpleSign(String applyID, byte[] plainData) {
+        return detachSign(applyID, plainData);
+    }
+
+    public String detachSignPDF(String strDN, String strFileNameIn, String strFileNameOut) {
+        return detachSign(strDN, "".getBytes());
+    }
+
+    public long verifyDetachSignPDF(String strPDFFileName) {
+        File pdfFiles = null;
+        if (CommUtil.isNull(strPDFFileName)) {
+            this.longErrCode = -10703222L;
+            this.strErrMsg = "参数不合法，带签名结果的文件全路径不能为空！";
+            return this.longErrCode;
+        } else {
+            byte[] byteSignedData = null;
+            String strXmlPlainFileInfo = "";
+            long longReturn = 0L;
+
+            try {
+                long var8;
+                try {
+                    pdfFiles = File.createTempFile("temp", ".pdf");
+                    FileUtils.copyFile(new File(strPDFFileName), pdfFiles);
+                    String path = pdfFiles.getPath();
+                    byte[] byteFromFile = cn.com.jit.assp.client.util.FileUtils.readByteFromFile(new File(path));
+                    String signData = PDFUtil.getPDFSignData(pdfFiles.getPath());
+                    if ("error".equals(signData)) {
+                        this.longErrCode = -10703223L;
+                        this.strErrMsg = "读取PDF文件错误！";
+                        var8 = this.longErrCode;
+                        return var8;
+                    }
+
+                    String setNullResult = PDFUtil.setPDFSignDataNull(pdfFiles.getPath());
+                    if ("error".equals(setNullResult)) {
+                        this.longErrCode = -10703223L;
+                        this.strErrMsg = "读取PDF文件错误！";
+                        long var22 = this.longErrCode;
+                        return var22;
+                    }
+
+                    byteSignedData = signData == null ? null : signData.getBytes();
+                    ArrayList alData = new ArrayList();
+                    alData.add(pdfFiles.getPath());
+                    strXmlPlainFileInfo = DSignTools.generateSignDataXmlSB(alData, "F", strPDFFileName, this.dsclient.getConfig()).toString();
+                } catch (IOException var17) {
+                } catch (CSSException var18) {
+                    this.longErrCode = UtilTool.convertStr2Long(var18.getCode(), -10700000L);
+                    this.strErrMsg = var18.getDescription();
+                    var8 = this.longErrCode;
+                    return var8;
+                } catch (Exception var19) {
+                    LOGGER.error(var19.getMessage(), var19);
+                    this.longErrCode = UtilTool.convertStr2Long("-10709281", -10700000L);
+                    this.strErrMsg = "验证签名业务失败";
+                }
+            } finally {
+                if (pdfFiles != null) {
+                    pdfFiles.delete();
+                }
+
+            }
+
+            longReturn = this.verifyDetachedSign(byteSignedData, strXmlPlainFileInfo.getBytes());
+            return longReturn;
+        }
+    }
+
+    /**
+     * 数据签名detach
+     *
+     * @param applayID  证书序列号
+     * @param plainData 原文
+     * @return 签名结果(Base64编码格式)
+     */
+    public String detachSign(String applayID, byte[] plainData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        String strRtnValue = null;
+        MOFSignResult detachSign;
+        try {
+            detachSign = hsmTradeService.sign(applayID, plainData);
+            strRtnValue = new String(detachSign.getSignData());
+
+            System.out.println("签名结果：" + detachSign);
+
+        } catch (NewCSSException var10) {
+            var10.printStackTrace();
+            this.longErrCode = UtilTool.convertStr2Long("-1", -10700000L);
+            this.strErrMsg = "制作签名业务失败";
+            LOGGER.error(var10.getMessage(), var10);
+        } catch (Exception var11) {
+            var11.printStackTrace();
+            LOGGER.error(var11.getMessage(), var11);
+            this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+            this.strErrMsg = "制作签名业务失败";
+        }
+        return strRtnValue;
+    }
+
+    public String detachSign(String applyID, InputStream is) {
+        return detachSign(applyID, "".getBytes());
+    }
+
+    /**
+     * 验签业务
+     *
+     * @param signedData 签名数据
+     * @param plainData
+     * @return
+     */
+    public long verifyDetachedSign(byte[] signedData, byte[] plainData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        long lRtnValue = 0L;
+        MOFVerifyResult verifyDetachedSign = null;
+        try {
+            if (CommUtil.isNull(signedData)) {
+                throw new NewCSSException(-10700101, "参数为空或不合法");
+            }
+            if (CommUtil.isNull(plainData)) {
+                throw new NewCSSException(-10700101, "参数为空或不合法");
+            }
+
+            verifyDetachedSign = hsmTradeService.verifySign(org.apache.mina.util.Base64.decodeBase64(signedData),plainData);
+            lRtnValue = verifyDetachedSign.getErrorCode();
+
+            System.out.println("验签结果：" + verifyDetachedSign);
+
+        } catch (NewCSSException var9) {
+            this.longErrCode = UtilTool.convertStr2Long("-1", -10700000L);
+            this.strErrMsg = "验证签名业务失败";
+            lRtnValue = this.longErrCode;
+        } catch (Exception var11) {
+            LOGGER.error(var11.getMessage(), var11);
+            this.longErrCode = UtilTool.convertStr2Long("-10709281", -10700000L);
+            lRtnValue = this.longErrCode;
+            this.strErrMsg = "验证签名业务失败";
+        }
+        return lRtnValue;
+    }
+
+    public long verifyDetachedSign(byte[] signedData, InputStream is) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        long lRtnValue = 0L;
+        try {
+            if (CommUtil.isNull(signedData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+
+            if (null == is) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            verifyDetachedSign(signedData, "".getBytes());
+        } catch (CSSException var8) {
+            lRtnValue = UtilTool.convertStr2Long(var8.getCode(), -10700000L);
+            this.strErrMsg = var8.getDescription();
+            this.longErrCode = lRtnValue;
+        } catch (Exception var10) {
+            lRtnValue = UtilTool.convertStr2Long("-10709281", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "验证签名业务失败";
+        }
+        return lRtnValue;
+    }
+
+    public long simpleVerifySign(byte[] signedData, byte[] plainData) {
+        return this.verifyDetachedSign(signedData, plainData);
+    }
+
+    public String getCertInfo(String strCertType, int intInfoType, String strOID) {
+        CertResult certResult = null;
+        long lRtnValue = 0L;
+        CertParams certParams = new CertIdParams();
+        certParams.setCertInfo(strOID);
+        try {
+            certResult = hsmTradeService.queryCert(certParams, strOID);
+        } catch (NewCSSException e) {
+            lRtnValue = UtilTool.convertStr2Long("-1", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "查询证书业务失败";
+        } catch (Exception var10) {
+            lRtnValue = UtilTool.convertStr2Long("-10709281", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "查询证书业务失败";
+        }
+        return certResult.getDsCert();
+    }
+
+    public String getTsaCertInfo(String itemName) {
+        return this.rs.getTsaValue(itemName);
+    }
+
+    public Date getTsaTime() {
+        return this.rs.getTsaTime();
+    }
+
+    public Date getTsaTimeByMS() {
+        try {
+            return this.rs.getTsaTimeByMS();
+        } catch (Exception var2) {
+            return null;
+        }
+    }
+
+    public String attachSign(String applayID, byte[] plainData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        String strRtnValue = null;
+        byte[] signedData = null;
+        MOFSignResult mofSignResult;
+
+        try {
+            if (CommUtil.isNull(plainData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            mofSignResult = hsmTradeService.sign(applayID, plainData);
+            byte[] signData = mofSignResult.getSignData();
+            if (signedData != null && signedData.length > 0) {
+                strRtnValue = ByteArrayUtil.toHexString(signData);
+            }
+        } catch (NewCSSException e) {
+            LOGGER.error(e.getMessage(), e);
+            this.longErrCode = UtilTool.convertStr2Long("-1", -10700000L);
+            this.strErrMsg = "制作签名业务失败";
+        } catch (CSSException var10) {
+            LOGGER.error(var10.getMessage(), var10);
+            this.longErrCode = UtilTool.convertStr2Long(var10.getCode(), -10700000L);
+            this.strErrMsg = var10.getDescription();
+        } catch (Exception var11) {
+            LOGGER.error(var11.getMessage(), var11);
+            this.longErrCode = UtilTool.convertStr2Long("-10709180", -10700000L);
+            this.strErrMsg = "制作签名业务失败";
+        }
+        return strRtnValue;
+    }
+
+    public long verifyAttachedSign(byte[] signedData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        long lRtnValue = 0L;
+        Object plainData = null;
+        MOFVerifyResult verifyAttachedSign = null;
+        try {
+            if (CommUtil.isNull(signedData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            verifyAttachedSign = hsmTradeService.verifySign(signedData, null);
+            verifyAttachedSign.getDsCert();
+
+        } catch (CSSException var10) {
+            lRtnValue = UtilTool.convertStr2Long(var10.getCode(), -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = var10.getDescription();
+        } catch (Exception var11) {
+            LOGGER.error(var11.getMessage(), var11);
+            lRtnValue = UtilTool.convertStr2Long("-10709181", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "验证签名业务失败";
+        }
+
+        return lRtnValue;
+    }
+
+    public String subsequentVerifySign(String applayID, byte[] plainData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        String strRtnValue = null;
+        MOFSignResult detachSign;
+        try {
+            if (CommUtil.isNull(plainData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            detachSign = hsmTradeService.sign(applayID, plainData);
+            byte[] signData = detachSign.getSignData();
+            if (signData != null && signData.length > 0) {
+                strRtnValue = ByteArrayUtil.toHexString(signData);
+            }
+        } catch (NewCSSException e) {
+            e.printStackTrace();
+        } catch (CSSException var6) {
+            this.longErrCode = UtilTool.convertStr2Long("-1", -10700000L);
+            this.strErrMsg = var6.getDescription();
+        } catch (Exception var7) {
+            LOGGER.error(var7.getMessage(), var7);
+            this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+            this.strErrMsg = "制作签名业务失败";
+        }
+        return strRtnValue;
+    }
+
+    public long verifySubsequent(byte[] signedData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        this.rs.clear();
+        long lRtnValue = 0L;
+        MOFVerifyResult verifyDetachedSign = null;
+
+        try {
+            if (CommUtil.isNull(signedData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            verifyDetachedSign = hsmTradeService.verifySign(signedData, "".getBytes());
+            verifyDetachedSign.getDsCert();
+        } catch (NewCSSException e) {
+            lRtnValue = UtilTool.convertStr2Long(String.valueOf(verifyDetachedSign.getErrorCode()), -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = verifyDetachedSign.getServerInfo();
+        } catch (CSSException var6) {
+            lRtnValue = UtilTool.convertStr2Long(String.valueOf(verifyDetachedSign.getErrorCode()), -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = verifyDetachedSign.getServerInfo();
+        } catch (Exception var7) {
+            LOGGER.error(var7.getMessage(), var7);
+            this.longErrCode = UtilTool.convertStr2Long("-10709281", -10700000L);
+            lRtnValue = this.longErrCode;
+            this.strErrMsg = "验证签名业务失败";
+        }
+
+        return lRtnValue;
+    }
+
+    /**
+     * 封装信封业务
+     *
+     * @param strCertAlias
+     * @param bOrgData
+     * @return
+     */
+    public String encryptEnvelop(String[] strCertAlias, byte[] bOrgData) {
+        String envelopData = null;
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        MOFEnvelopResult encryptEnvelop = null;
+        try {
+            encryptEnvelop = hsmTradeService.encryptEnvelop(strCertAlias, bOrgData);
+            envelopData = org.bouncycastle.util.encoders.Base64.toBase64String(encryptEnvelop.getEnvelopData());
+        } catch (NewCSSException e) {
+            this.longErrCode = UtilTool.convertStr2Long(String.valueOf(encryptEnvelop.getErrorCode()), -10700000L);
+            this.strErrMsg = "制作信封业务失败";
+        } catch (Exception e2) {
+            LOGGER.error(e2.getMessage(), e2);
+            this.longErrCode = UtilTool.convertStr2Long("-10709371", -10700000L);
+            this.strErrMsg = "制作信封业务失败";
+        }
+        return envelopData;
+    }
+
+    /**
+     * 解析信封业务
+     *
+     * @param bEnvelop
+     * @return
+     */
+    public long decryptEnvelop(byte[] bEnvelop) {
+        long lRtnValue = 0L;
+        MOFDecryptResult decryptEnvelop = null;
+        try {
+            if (CommUtil.isNull(bEnvelop)) {
+                this.longErrCode = UtilTool.convertStr2Long("-10709372", -10700000L);
+                this.strErrMsg = "解信封业务失败，信封结果为空";
+                return this.longErrCode;
+            }
+            decryptEnvelop = hsmTradeService.decryptEnvelop(org.bouncycastle.util.encoders.Base64.decode(bEnvelop));
+            byte[] palinData = decryptEnvelop.getPalinData();
+            lRtnValue = decryptEnvelop.getErrorCode();
+        } catch (NewCSSException e) {
+            this.strErrMsg = "Encoding the file error!";
+            this.longErrCode = UtilTool.convertStr2Long("-1", -10700000L);
+            this.strErrMsg = "解信封业务失败";
+            return this.longErrCode;
+        } catch (Exception var11) {
+            this.longErrCode = UtilTool.convertStr2Long("-10709373", -10700000L);
+            this.strErrMsg = "解信封业务失败";
+            return this.longErrCode;
+        }
+        return lRtnValue;
+    }
+
+    private String unionList(List<String> list, String separater) {
+        StringBuffer sb = new StringBuffer();
+        Iterator i$ = list.iterator();
+
+        while (i$.hasNext()) {
+            String string = (String) i$.next();
+            sb.append(string).append(separater);
+        }
+
+        return sb.deleteCharAt(sb.length() - 1).toString();
+    }
+
+    private String getEncAlg(P7Param p7Param) {
+        String encMech = p7Param.GetEncMech().getMechanismType();
+        return encMech;
+    }
+
+    private String getIssueAndSerials(byte[] envelopDate, String separater, String lineSeparater) throws CSSException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(envelopDate);
+        ASN1Sequence seq = null;
+        ASN1InputStream ais = null;
+
+        try {
+            ais = new ASN1InputStream(bis);
+            seq = (ASN1Sequence) ais.readObject();
+            ContentInfo contentInfo = ContentInfo.getInstance(seq);
+            EnvelopedData envelopedData = EnvelopedData.getInstance(contentInfo.getContent());
+            ASN1Set recipientInfos = envelopedData.getRecipientInfos();
+            RecipientInfo recipientInfo = null;
+            StringBuffer sb = new StringBuffer();
+
+            for (int i = 0; i < recipientInfos.size(); ++i) {
+                recipientInfo = new RecipientInfo((ASN1Sequence) recipientInfos.getObjectAt(i));
+                IssuerAndSerialNumber recipienter = recipientInfo.getIssuerAndSerialNumber();
+                String issue = recipienter.getName().toString();
+                String serial = recipienter.getCertificateSerialNumber().getValue().toString(10);
+                String issueAndSerila = issue + separater + serial.toUpperCase();
+                sb.append(issueAndSerila + lineSeparater);
+            }
+
+            String var30 = sb.deleteCharAt(sb.length() - 1).toString();
+            return var30;
+        } catch (Exception var28) {
+            throw new CSSException("-10709329", "解析信封结果错误");
+        } finally {
+            if (ais != null) {
+                try {
+                    ais.close();
+                } catch (IOException var27) {
+                    this.longErrCode = UtilTool.convertStr2Long("-10700002", -10700002L);
+                    this.strErrMsg = "IO流错误";
+                }
+            }
+
+            if (bis != null) {
+                try {
+                    bis.close();
+                } catch (IOException var26) {
+                    this.longErrCode = UtilTool.convertStr2Long("-10700002", -10700002L);
+                    this.strErrMsg = "IO流错误";
+                }
+            }
+
+        }
+    }
+
+    public String createSignedEnvelop(String strSignCertAlias, String[] strEncCertAlias, ArrayList alOrgData) {
+        String signedEnvelopData = null;
+        if (alOrgData.size() == 1) {
+            this.longErrCode = 0L;
+            this.strErrMsg = null;
+            new EnvelopResponseSet();
+            String serverResponseXml = null;
+
+            try {
+                serverResponseXml = this.dsclient.makeSignedEnvelop(strSignCertAlias, strEncCertAlias, (byte[]) ((byte[]) alOrgData.get(0)), "", "");
+                if (serverResponseXml != null && serverResponseXml.length() > 0) {
+                    EnvelopSimpResponseParser esrp = new EnvelopSimpResponseParser();
+                    EnvelopResponseSet eResSet = esrp.parserXML(serverResponseXml);
+                    if (eResSet.isSucceed()) {
+                        signedEnvelopData = eResSet.getSignedEnvelopData();
+                        return signedEnvelopData;
+                    } else {
+                        this.longErrCode = UtilTool.convertStr2Long(eResSet.getErrCode(), -10700000L);
+                        this.strErrMsg = eResSet.getErrDisc();
+                        return signedEnvelopData;
+                    }
+                } else {
+                    this.longErrCode = -10703108L;
+                    this.strErrMsg = "服务器返回报文为空";
+                    return signedEnvelopData;
+                }
+            } catch (CSSException var8) {
+                this.longErrCode = UtilTool.convertStr2Long(var8.getCode(), -10700000L);
+                this.strErrMsg = var8.getDescription();
+                return signedEnvelopData;
+            } catch (Exception var9) {
+                this.longErrCode = UtilTool.convertStr2Long("-10709371", -10700000L);
+                this.strErrMsg = "制作信封业务失败";
+                return signedEnvelopData;
+            }
+        } else {
+            this.longErrCode = -10703105L;
+            this.strErrMsg = "用于应用扩展，目前未支持，请不要在ArrayList中添加一个以上的原文！";
+            return signedEnvelopData;
+        }
+    }
+
+    public String encryptSignedEnvelop(String strSignCertAlias, String[] strEncCertAlias, ArrayList alOrgData) {
+        String signedEnvelopData = null;
+        String signReturn = null;
+        if (alOrgData.size() == 1) {
+            signReturn = this.attachSign(strSignCertAlias, (byte[]) ((byte[]) alOrgData.get(0)));
+        } else {
+            this.longErrCode = -10703105L;
+            this.strErrMsg = "用于应用扩展，目前未支持，请不要在ArrayList中添加一个以上的原文！";
+        }
+
+        if (!"".equals(signReturn) && signReturn != null) {
+            signedEnvelopData = this.encryptEnvelop(strEncCertAlias, signReturn.getBytes());
+        } else {
+            this.longErrCode = this.getErrorCode();
+            this.strErrMsg = this.getErrorMessage();
+        }
+
+        if ("".equals(signedEnvelopData) || signedEnvelopData == null) {
+            this.longErrCode = this.getErrorCode();
+            this.strErrMsg = this.getErrorMessage();
+        }
+
+        return signedEnvelopData;
+    }
+
+    public long decryptSignedEnvelop(byte[] bEnvelop) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        long envelopRtnValue = -1L;
+        long signedRtnValue = -1L;
+        long lRtnValue = -1L;
+        String signedData = null;
+        envelopRtnValue = this.decryptEnvelop(bEnvelop);
+        if (envelopRtnValue != 0L) {
+            this.longErrCode = this.getErrorCode();
+            this.strErrMsg = this.getErrorMessage();
+            lRtnValue = envelopRtnValue;
+        } else {
+            signedData = this.getData();
+            signedRtnValue = this.verifyAttachedSign(signedData.getBytes());
+            if (signedRtnValue != 0L) {
+                this.longErrCode = this.getErrorCode();
+                this.strErrMsg = this.getErrorMessage();
+                lRtnValue = signedRtnValue;
+            }
+
+            if (envelopRtnValue == 0L && signedRtnValue == 0L) {
+                lRtnValue = 0L;
+            }
+        }
+
+        return lRtnValue;
+    }
+
+    /**
+     * 解析信封
+     *
+     * @param bEnvelop
+     * @return
+     */
+    public long verifySignedEnvelop(byte[] bEnvelop) {
+        MOFDecryptResult decryptEnvelop = null;
+        long lRtnValue = 0L;
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        try {
+            decryptEnvelop = hsmTradeService.decryptEnvelop(org.bouncycastle.util.encoders.Base64.decode(bEnvelop));
+            byte[] palinData = decryptEnvelop.getPalinData();
+            lRtnValue = decryptEnvelop.getErrorCode();
+        } catch (NewCSSException e) {
+            LOGGER.error(e.getMessage(), e);
+            this.longErrCode = -10709285L;
+            this.strErrMsg = "解信封业务失败";
+            return this.longErrCode;
+        }
+        return lRtnValue;
+    }
+
+    public String normalAttachSign(String strDN, String strFileNameIn, String strFileNameOut) {
+        String strSignedResult = null;
+        String strXmlPlainFileInfo = "";
+        if (CommUtil.isNull(strFileNameIn)) {
+            this.longErrCode = -10703110L;
+            this.strErrMsg = "参数不合法，原文文件的全路径不能为空！";
+            return null;
+        } else {
+            try {
+                ArrayList alData = new ArrayList();
+                alData.add(strFileNameIn);
+                strXmlPlainFileInfo = DSignTools.generateSignDataXmlSB(alData, "F", this.dsclient.getConfig()).toString();
+                strSignedResult = this.attachSign(strDN, strXmlPlainFileInfo.getBytes());
+                if (null != strSignedResult && 0 != strSignedResult.length()) {
+                    if (null != strFileNameOut && 0 != strFileNameOut.length()) {
+                        DSignTools.writeByteToFile(strFileNameOut, strSignedResult.getBytes());
+                        return "";
+                    } else {
+                        return strSignedResult;
+                    }
+                } else {
+                    return null;
+                }
+            } catch (CSSException var7) {
+                this.longErrCode = UtilTool.convertStr2Long(var7.getCode(), -10700000L);
+                this.strErrMsg = var7.getDescription();
+                return null;
+            } catch (Exception var8) {
+                this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+                this.strErrMsg = "制作签名业务失败";
+                return null;
+            }
+        }
+    }
+
+    public long verifyAttachedSign(String strFileNameAttached) {
+        byte[] byteSignedFileInfoData = null;
+        long longReturn = 0L;
+
+        try {
+            if (CommUtil.isNull(strFileNameAttached)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+
+            byteSignedFileInfoData = DSignTools.readFile(strFileNameAttached);
+        } catch (CSSException var6) {
+            longReturn = UtilTool.convertStr2Long(var6.getCode(), -10700000L);
+            this.longErrCode = longReturn;
+            this.strErrMsg = var6.getDescription();
+        } catch (Exception var7) {
+            this.longErrCode = UtilTool.convertStr2Long("-10709281", -10700000L);
+            this.strErrMsg = "验证签名业务失败";
+        }
+
+        longReturn = this.verifyAttachedSign(byteSignedFileInfoData);
+        return longReturn;
+    }
+
+    public String subsequentVerifySign(String strDN, String strFileNameIn, String strFileNameOut) {
+        String strSignedResult = null;
+        String strXmlPlainFileInfo = "";
+        if (CommUtil.isNull(strFileNameIn)) {
+            this.longErrCode = -10703110L;
+            this.strErrMsg = "参数不合法，原文文件的全路径不能为空！";
+            return null;
+        } else {
+            try {
+                ArrayList alData = new ArrayList();
+                alData.add(strFileNameIn);
+                strXmlPlainFileInfo = DSignTools.generateSignDataXmlSB(alData, "F", this.dsclient.getConfig()).toString();
+                strSignedResult = this.subsequentVerifySign(strDN, strXmlPlainFileInfo.getBytes());
+                if (null != strSignedResult && 0 != strSignedResult.length()) {
+                    if (null != strFileNameOut && 0 != strFileNameOut.length()) {
+                        DSignTools.writeByteToFile(strFileNameOut, strSignedResult.getBytes());
+                        return "";
+                    } else {
+                        return strSignedResult;
+                    }
+                } else {
+                    return null;
+                }
+            } catch (CSSException var7) {
+                this.longErrCode = UtilTool.convertStr2Long(var7.getCode(), -10700000L);
+                this.strErrMsg = var7.getDescription();
+                return null;
+            } catch (Exception var8) {
+                this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+                this.strErrMsg = "制作签名业务失败";
+                return null;
+            }
+        }
+    }
+
+    public long verifySubsequent(String strFileNameAttached) {
+        byte[] byteSignedFileInfoData = null;
+        long longReturn = 0L;
+
+        try {
+            if (CommUtil.isNull(strFileNameAttached)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+
+            byteSignedFileInfoData = DSignTools.readFile(strFileNameAttached);
+        } catch (CSSException var6) {
+            longReturn = UtilTool.convertStr2Long(var6.getCode(), -10700000L);
+            this.longErrCode = longReturn;
+            this.strErrMsg = var6.getDescription();
+        } catch (Exception var7) {
+            this.longErrCode = UtilTool.convertStr2Long("-10709281", -10700000L);
+            this.strErrMsg = "验证签名业务失败";
+        }
+
+        longReturn = this.verifySubsequent(byteSignedFileInfoData);
+        return longReturn;
+    }
+
+    public String createSignedEnvelop(String strDNSignCert, String[] strDNEncCert, String strFileNameIn, String strFileNameOut) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        String encryptEnvelopData;
+        if (CommUtil.isNull(strFileNameIn)) {
+            this.longErrCode = -10703110L;
+            this.strErrMsg = "参数不合法，原文文件的全路径不能为空！";
+            return null;
+        } else {
+            try {
+                encryptEnvelopData = encryptEnvelop(strDNEncCert, org.bouncycastle.util.encoders.Base64.decode(strDNSignCert));
+            } catch (Exception var11) {
+                this.longErrCode = UtilTool.convertStr2Long("-10709371", -10700000L);
+                this.strErrMsg = "制作信封业务失败";
+                return null;
+            }
+        }
+        return encryptEnvelopData;
+    }
+
+    public String encryptSignedEnvelop(String strDNSignCert, String[] strDNEncCert, String strFileNameIn, String strFileNameOut) {
+        MOFEnvelopResult encryptEnvelop = null;
+        String envelopData = null;
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+
+        if (strDNSignCert == null || strDNSignCert.length() < 0) {
+            this.longErrCode = -10703102L;
+            this.strErrMsg = "参数不合法，证书ID输入为空！";
+            return "";
+        }
+        try {
+            String[] certIdS = new String[]{strDNSignCert};
+            encryptEnvelop = hsmTradeService.encryptEnvelopFile(certIdS, strFileNameIn, strFileNameOut);
+            envelopData = org.bouncycastle.util.encoders.Base64.toBase64String(encryptEnvelop.getEnvelopData());
+        } catch (NewCSSException e) {
+            LOGGER.error(e.getMessage(), e);
+            this.longErrCode = -10709284L;
+            this.strErrMsg = "制作信封业务失败";
+        }
+        return envelopData;
+    }
+
+    public long decryptSignedEnvelop(String strFileNameIn) {
+        return 0L;
+    }
+
+    public String normalEncryptEnvelop(String[] strDN, String strFileNameIn, String strFileNameOut) {
+        String strEnvelopedResult = null;
+        String strXmlPlainFileInfo = "";
+        byte[] byteEnvelopedFileInfoData = null;
+        if (CommUtil.isNull(strFileNameIn)) {
+            this.longErrCode = -10703109L;
+            this.strErrMsg = "参数不合法，接收方签名证书的ID或DN，原文文件的全路径不能为空！";
+            return null;
+        } else {
+            try {
+                byte[] byteFromFile = cn.com.jit.assp.client.util.FileUtils.readByteFromFile(new File(strFileNameIn));
+                encryptEnvelop(strDN,byteFromFile);
+            } catch (Exception var9) {
+                LOGGER.error(var9.getMessage(), var9);
+                this.longErrCode = UtilTool.convertStr2Long("-10709371", -10700000L);
+                this.strErrMsg = "制作信封业务失败";
+            }
+
+            return null;
+        }
+    }
+
+    public long decryptEnvelop(String strFileNameIn) {
+        byte[] byteEnvelopedFileInfoData = null;
+        long longReturn = 0L;
+
+        try {
+            if (CommUtil.isNull(strFileNameIn)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+
+            byteEnvelopedFileInfoData = DSignTools.readFile(strFileNameIn);
+        } catch (CSSException var6) {
+            longReturn = UtilTool.convertStr2Long(var6.getCode(), -10700000L);
+            this.longErrCode = longReturn;
+            this.strErrMsg = var6.getDescription();
+        }
+
+        longReturn = this.decryptEnvelop(byteEnvelopedFileInfoData);
+        return longReturn;
+    }
+
+    public String p1Sign(String strDN, String strDigestAlg, byte[] strPlainData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        String strRtnValue = null;
+        MOFSignResult mofSignResult;
+        try {
+            if (CommUtil.isNull(strPlainData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            mofSignResult = hsmTradeService.pkcsSignData(strDN.getBytes(), strPlainData);
+            strRtnValue = org.bouncycastle.util.encoders.Base64.toBase64String(mofSignResult.getSignData());
+        } catch (NewCSSException e) {
+            e.printStackTrace();
+        } catch (CSSException var8) {
+            this.longErrCode = UtilTool.convertStr2Long(var8.getCode(), -10700000L);
+            this.strErrMsg = var8.getDescription();
+        } catch (Exception var9) {
+            LOGGER.error(var9.getMessage(), var9);
+            this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+            this.strErrMsg = "签名业务失败";
+        }
+
+        return strRtnValue;
+    }
+
+    public long p1Verify(String strIssuerAndSn, String strDigetsAlg, byte[] signedData, byte[] strOrgData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        long lRtnValue = 0L;
+        MOFVerifyResult mofVerifyResult;
+        try {
+            if (CommUtil.isNull(signedData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            if (CommUtil.isNull(strOrgData)) {
+                throw new CSSException("-10700101", "", "参数为空或不合法");
+            }
+            mofVerifyResult = hsmTradeService.pkcsVerifyData("".getBytes(), strIssuerAndSn.getBytes(), strOrgData,
+                    org.bouncycastle.util.encoders.Base64.decode(signedData));
+            mofVerifyResult.getErrorCode();
+
+        } catch (NewCSSException e) {
+            e.printStackTrace();
+            lRtnValue = UtilTool.convertStr2Long("-1", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "验证签名业务失败";
+        } catch (CSSException var9) {
+            lRtnValue = UtilTool.convertStr2Long(var9.getCode(), -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = var9.getDescription();
+        } catch (Exception var10) {
+            lRtnValue = UtilTool.convertStr2Long("-10709281", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "验证签名业务失败";
+        }
+
+        return lRtnValue;
+    }
+
+    public String p1Sign(String strDN, String strDigestAlg, String strFileNameIn) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        String strRtnValue = null;
+        Object var5 = null;
+
+        try {
+            byte[] signedData = this.getByteSignedData(strFileNameIn);
+            strRtnValue = this.p1Sign(strDN, strDigestAlg, signedData);
+        } catch (CSSException var7) {
+            this.longErrCode = UtilTool.convertStr2Long(var7.getCode(), -10700000L);
+            this.strErrMsg = var7.getDescription();
+        } catch (Exception var8) {
+            LOGGER.error(var8.getMessage(), var8);
+            this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+            this.strErrMsg = "制作签名业务失败";
+        }
+
+        return strRtnValue;
+    }
+
+    public long p1Verify(String strIssuerAndSn, String strDigetsAlg, String strFileNameIn, byte[] byteSignedData) {
+        this.longErrCode = 0L;
+        this.strErrMsg = null;
+        this.rs.clear();
+        long lRtnValue = 0L;
+        Object var7 = null;
+
+        try {
+            byte[] plainData = this.getByteSignedData(strFileNameIn);
+            lRtnValue = this.p1Verify(strIssuerAndSn, strDigetsAlg, byteSignedData, plainData);
+        } catch (CSSException var9) {
+            lRtnValue = UtilTool.convertStr2Long(var9.getCode(), -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = var9.getDescription();
+        } catch (Exception var10) {
+            lRtnValue = UtilTool.convertStr2Long("-10709281", -10700000L);
+            this.longErrCode = lRtnValue;
+            this.strErrMsg = "验证签名业务失败";
+        }
+
+        return lRtnValue;
+    }
+
+    private byte[] getByteSignedData(String strFileNameIn) throws CSSException {
+        byte[] signedData = null;
+        FileInputStream fin = null;
+        try {
+            fin = new FileInputStream(strFileNameIn);
+            signedData = new byte[fin.available()];
+            fin.read(signedData);
+        } catch (FileNotFoundException var14) {
+            throw new CSSException("-10700001", ".", "没有找到相应的文件", var14.getMessage());
+        } catch (IOException var15) {
+            throw new CSSException("-10700002", ".", "IO流错误", var15.getMessage());
+        } finally {
+            if (fin != null) {
+                try {
+                    fin.close();
+                } catch (IOException var13) {
+                    this.longErrCode = UtilTool.convertStr2Long("-10700002", -10700002L);
+                    this.strErrMsg = "IO流错误";
+                }
+            }
+
+        }
+
+        return signedData;
+    }
+
+    public String getFile(String strSaveFilePath) {
+        String strSaveFileName = null;
+        byte[] byteSaveFileContent = null;
+        String strSaveFileTotalPath = null;
+        if (CommUtil.isNull(strSaveFilePath)) {
+            this.longErrCode = -10703111L;
+            this.strErrMsg = "参数不合法，还原文件的存储路径不能为空！";
+            return null;
+        } else {
+            strSaveFileName = this.getFileName();
+            byteSaveFileContent = this.getFilePlainData();
+            if (null != strSaveFileName && 0 != strSaveFileName.trim().length()) {
+                strSaveFileTotalPath = strSaveFilePath.substring(strSaveFilePath.length() - 1).equals(File.separator) ? strSaveFilePath + strSaveFileName : strSaveFilePath + File.separator + strSaveFileName;
+
+                try {
+                    DSignTools.writeByteToFile(strSaveFileTotalPath, byteSaveFileContent);
+                } catch (CSSException var6) {
+                    this.longErrCode = UtilTool.convertStr2Long(var6.getCode(), -10700000L);
+                    this.strErrMsg = var6.getDescription();
+                    strSaveFileName = null;
+                }
+
+                return strSaveFileName;
+            } else {
+                return "";
+            }
+        }
+    }
+
+    public String normalDetachSign(String strDN, String strFileNameIn, String strFileNameOut) {
+        return detachSign(strDN, "".getBytes());
+    }
+
+    public byte[] generateRandom(int length) {
+        if (length < 0) {
+            return null;
+        } else {
+            SecureRandom sRandom = new SecureRandom();
+            byte[] data = new byte[length];
+            sRandom.nextBytes(data);
+            return data;
+        }
+    }
+
+    public byte[] generateSignDataXmlSB(String fileName, byte[] fileContent) {
+        StringBuffer bufSignData = new StringBuffer();
+        if (fileName != null && !fileName.equals("") && fileContent != null && fileContent.length > 0) {
+            bufSignData.append("<?xml version=\"1.0\" encoding=\"GB2312\" standalone=\"no\"?>\r\n");
+            bufSignData.append("<DSign>");
+            bufSignData.append("\r\n").append("\t").append("<File>");
+            byte[] fileNameBase64 = Base64.encode(fileName.getBytes());
+            fileName = UtilTool.processBase64Code(new String(fileNameBase64));
+            bufSignData.append("\r\n").append("\t\t").append("<name>");
+            bufSignData.append(fileName);
+            bufSignData.append("</name>");
+            byte[] b = Base64.encode(fileContent);
+            bufSignData.append("\r\n").append("\t\t").append("<content>");
+            bufSignData.append(UtilTool.processBase64Code(new String(b)).toString());
+            bufSignData.append("</content>");
+            bufSignData.append("\r\n").append("\t").append("</File>");
+            bufSignData.append("\r\n").append("</DSign>");
+            return bufSignData.toString().getBytes();
+        } else {
+            return null;
+        }
+    }
+
+    public long bigEncryptSignedEnvelop(String strDNSignCert, String[] strDNEncCert, String strFileNameIn, String strFileNameOut) {
+        long beginTime = System.currentTimeMillis();
+        this.encDataProcessor(strDNSignCert, strDNEncCert, strFileNameIn, strFileNameOut, "SignedEnvelop");
+        long endTime = System.currentTimeMillis();
+        long castTime = endTime - beginTime;
+        System.out.println("签名业务,耗时" + castTime + "ms");
+        return this.longErrCode;
+    }
+
+    public long bigEncryptEnvelop(String[] strDNEncCert, String strFileNameIn, String strFileNameOut) {
+        this.encDataProcessor((String) null, strDNEncCert, strFileNameIn, strFileNameOut, "Envelop");
+        return this.longErrCode;
+    }
+
+    private void encDataProcessor(String strDNSignCert, String[] strDNEncCert, String strFileNameIn, String strFileNameOut, String type) {
+    }
+
+    public long bigAttachSign(String strDN, String strFileNameIn, String strFileNameOut) {
+        this.encDataProcessor(strDN, (String[]) null, strFileNameIn, strFileNameOut, "AttachSign");
+        return this.longErrCode;
+    }
+
+    public long bigDetachSign(String strDN, String strFileNameIn, String strFileNameOut) {
+        this.encDataProcessor(strDN, (String[]) null, strFileNameIn, strFileNameOut, "DetachSign");
+        return this.longErrCode;
+    }
+
+    public long bigVerifyAttachedSign(String strFileNameIn, String strFileDir) {
+        this.decDataProcessor(strFileNameIn, "attach", strFileDir, "AttachSign");
+        return this.longErrCode;
+    }
+
+    public long bigVerifyDetachedSign(String strFileNameIn, String strFileNamePlain, String strFileDir) {
+        this.decDataProcessor(strFileNameIn, strFileNamePlain, strFileDir, "DetachSign");
+        return this.longErrCode;
+    }
+
+    public long bigDecryptSignedEnvelop(String strFileNameIn, String origPath, String strFileDir) {
+        this.decDataProcessor(strFileNameIn, origPath, strFileDir, "SignedEnvelop");
+        this.bigPlainData = null;
+        return this.longErrCode;
+    }
+
+    public long bigDecryptSignedEnvelop(String strFileNameIn, String strFileDir) {
+        this.decDataProcessor(strFileNameIn, "", strFileDir, "SignedEnvelop");
+        this.bigPlainData = null;
+        return this.longErrCode;
+    }
+
+    public long bigDecryptEnvelop(String strFileNameIn, String strFileDir) {
+        this.decDataProcessor(strFileNameIn, "decryptEnvelop", strFileDir, "Envelop");
+        return this.longErrCode;
+    }
+
+    private void decDataProcessor(String strFileNameIn, String strFileNamePlain, String strFileDir, String type) {
+
+    }
+
+    public void unpack(InputStream in, String strFileDir) throws IOException, CSSException {
+        byte[] packagenumByte = new byte[8];
+        if (null != in && !CommUtil.isNull(strFileDir)) {
+            in.read(packagenumByte, 0, 8);
+            String packageNumStr = new String(packagenumByte);
+            int packageNumInt = Integer.parseInt(packageNumStr);
+            if (packageNumInt > 0) {
+                for (int i = 0; i < packageNumInt; ++i) {
+                    byte[] lengthByte = new byte[8];
+                    in.read(lengthByte, 0, 8);
+                    String lengthStr = new String(lengthByte);
+                    int lengthInt = Integer.parseInt(lengthStr);
+                    byte[] contentByte = new byte[lengthInt];
+                    in.read(contentByte, 0, lengthInt);
+                    byte[] srcContentStr = null;
+                    String srcFileName = "";
+                    long longErrCode = this.decryptSignedEnvelop(contentByte);
+                    String strErrCode = String.valueOf(longErrCode);
+                    if (!strErrCode.equalsIgnoreCase("0")) {
+                        throw new CSSException(strErrCode, this.getErrorMessage());
+                    }
+
+                    srcContentStr = this.getFilePlainData();
+                    srcFileName = this.getFileName();
+                    boolean clearExist = false;
+                    if (i == 0) {
+                        clearExist = true;
+                    }
+
+                    this.saveResToFile(strFileDir + srcFileName, srcContentStr, clearExist);
+                }
+            }
+
+            in.close();
+        } else {
+            throw new CSSException("-10700101", "", "参数为空或不合法");
+        }
+    }
+
+    public byte[] genLvByte(int length, String content) {
+        if (null != content && length >= 0) {
+            String len = String.valueOf(length);
+            String addstr = "";
+            switch (len.length()) {
+                case 1:
+                    addstr = "0000000";
+                    break;
+                case 2:
+                    addstr = "000000";
+                    break;
+                case 3:
+                    addstr = "00000";
+                    break;
+                case 4:
+                    addstr = "0000";
+                    break;
+                case 5:
+                    addstr = "000";
+                    break;
+                case 6:
+                    addstr = "00";
+                    break;
+                case 7:
+                    addstr = "0";
+            }
+
+            len = addstr + len;
+            byte[] lv = ArrayUtils.addAll(len.getBytes(), content.getBytes());
+            return lv;
+        } else {
+            return null;
+        }
+    }
+
+    public byte[] genHeadAndBlockNumByte(long pnum) {
+        if (pnum < 0L) {
+            return null;
+        } else {
+            int packageSize = this.getConfigObject().getPackageSize() * 1024;
+            String head = "";
+            String strSize = String.valueOf(packageSize);
+            switch (strSize.length()) {
+                case 1:
+                    head = "*000000";
+                    break;
+                case 2:
+                    head = "*00000";
+                    break;
+                case 3:
+                    head = "*0000";
+                    break;
+                case 4:
+                    head = "*000";
+                    break;
+                case 5:
+                    head = "*00";
+                    break;
+                case 6:
+                    head = "*0";
+                    break;
+                case 7:
+                    head = "*";
+            }
+
+            head = head + strSize;
+            byte[] headByte = head.getBytes();
+            String blockNum = String.valueOf(pnum);
+            String addstr = "";
+            switch (blockNum.length()) {
+                case 1:
+                    addstr = "0000000";
+                    break;
+                case 2:
+                    addstr = "000000";
+                    break;
+                case 3:
+                    addstr = "00000";
+                    break;
+                case 4:
+                    addstr = "0000";
+                    break;
+                case 5:
+                    addstr = "000";
+                    break;
+                case 6:
+                    addstr = "00";
+                    break;
+                case 7:
+                    addstr = "0";
+            }
+
+            blockNum = addstr + blockNum;
+            byte[] blockNumByte = new byte[8];
+            blockNumByte = blockNum.getBytes();
+            byte[] headAndbLockNumByte = ArrayUtils.addAll(headByte, blockNumByte);
+            return headAndbLockNumByte;
+        }
+    }
+
+    public String genxml(String fileName, String content) {
+        StringBuffer bufSignData = new StringBuffer();
+        bufSignData.append("<?xml version=\"1.0\" encoding=\"GB2312\" standalone=\"no\"?>\r\n");
+        bufSignData.append("<DSign>");
+        bufSignData.append("\r\n\t");
+        bufSignData.append("<File>");
+        bufSignData.append("\r\n\t\t");
+        bufSignData.append("<name>");
+        bufSignData.append(fileName);
+        bufSignData.append("</name>");
+        bufSignData.append("\r\n\t\t");
+        bufSignData.append("<content>");
+        bufSignData.append(UtilTool.processBase64Code(content));
+        bufSignData.append("</content>");
+        bufSignData.append("\r\n\t");
+        bufSignData.append("</File>");
+        bufSignData.append("\r\n");
+        bufSignData.append("</DSign>");
+        return bufSignData.toString();
+    }
+
+    private void saveResToFile(String strFileNameOut, byte[] value, boolean clearExist) throws IOException {
+        if (null != strFileNameOut) {
+            if (clearExist) {
+                File existFile = new File(strFileNameOut);
+                if (existFile.exists()) {
+                    existFile.delete();
+                }
+            }
+
+            RandomAccessFile raf = new RandomAccessFile(strFileNameOut, "rw");
+            raf.seek(raf.length());
+            raf.write(value);
+            raf.close();
+        }
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void setTimeout(String timeout) {
+        Config.getInstance().setTimeout(timeout);
+    }
+
+    /**
+     * @deprecated
+     */
+    @Deprecated
+    public void setConnectTimeOut(String connectTimeOut) {
+        Config.getInstance().setConnectTimeOut(connectTimeOut);
+    }
+
+    public String attachXMLSign(String applayID, byte[] plainData) {
+        if (plainData != null && plainData.length != 0) {
+            this.longErrCode = 0L;
+            this.strErrMsg = null;
+            String strRtnValue = null;
+            Object var4 = null;
+
+            try {
+                String appId = applayID;
+                if (applayID == null || applayID.trim().length() == 0) {
+                    appId = this.getConfigObject().getAppID();
+                }
+
+                this.digestAlgID = this.getConfigObject().getDigestAlg();
+                if (this.digestAlgID != null && this.digestAlgID.trim().length() == 0) {
+                    ;
+                }
+
+                this.dsclient.setXML(true);
+                byte[] signedData = this.dsclient.doSign(plainData, true, true, false, this.digestAlgID, appId);
+                this.rs = this.dsclient.getRs();
+                if (signedData != null && signedData.length > 0) {
+                    strRtnValue = new String(signedData, "UTF-8");
+                }
+            } catch (CSSException var6) {
+                this.longErrCode = UtilTool.convertStr2Long(var6.getCode(), -10700000L);
+                this.strErrMsg = var6.getDescription();
+            } catch (Exception var7) {
+                LOGGER.error(var7.getMessage(), var7);
+                this.longErrCode = UtilTool.convertStr2Long("-10709280", -10700000L);
+                this.strErrMsg = "制作签名业务失败";
+            }
+
+            return strRtnValue;
+        } else {
+            this.strErrMsg = "原文为空。";
+            return null;
+        }
+    }
+    public Config getConfigObject() {
+        return this.dsclient.getConfig();
+    }
+    public long verifyAttachedXMLSign(byte[] signedData) {
+        return verifyAttachedSign(signedData);
+    }
+
+    public String attachSign(String strDN, String strFileNameIn, String strFileNameOut) {
+        return detachSign(strDN, strFileNameIn.getBytes());
+    }
+
+    public long verifyAttachedSign(String strFileNameAttached, String strFileDir) {
+        return verifyDetachedSign(strFileNameAttached.getBytes(), "".getBytes());
+    }
+
+    public String detachSign(String strDN, String strFileNameIn, String strFileNameOut) {
+        return detachSign(strDN, strFileNameIn.getBytes());
+    }
+
+    public long verifyDetachedSign(String strFileNameIn, byte[] bDetachedData, String strFileNameDetached) {
+        return verifyDetachedSign(bDetachedData, strFileNameIn.getBytes());
+    }
+
+    public String encryptEnvelop(String[] strDN, String strFileNameIn, String strFileNameOut) {
+        return encryptEnvelop(strDN, strFileNameIn.getBytes());
+    }
+
+    public long decryptEnvelop(String strFileNameIn, String strFileDir) {
+        return decryptEnvelop(strFileNameIn.getBytes());
+    }
+
+    DSignClient getDsclient() {
+        return this.dsclient;
+    }
+}
