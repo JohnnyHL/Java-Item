@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.hl.magic</groupId>
+	<artifactId>Java-Item</artifactId>
+	<packaging>pom</packaging>
+	<version>1.0-SNAPSHOT</version>
+
+	<modules>
+		<module>Java-CoreReel</module>
+		<module>Java-DesignMode</module>
+		<module>Java-LetCode</module>
+		<module>Java-BaseItem</module>
+		<module>Java-Git</module>
+		<module>Java-Maven</module>
+	</modules>
+
+	<!-- 属性版本配置 -->
+	<properties>
+		<java.version>1.8</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<target.applicaion.version>APPLICAION.1.0-RELESSE</target.applicaion.version>
+		<target.lib.version>LIB.1.0-RELESSE</target.lib.version>
+		<fastjson.version>1.2.58</fastjson.version>
+		<commons.lang3.version>3.8.1</commons.lang3.version>
+		<commons.pool2.version>2.5.0</commons.pool2.version>
+		<junit.version>4.12</junit.version>
+		<slf4j.version>1.7.7</slf4j.version>
+		<bouncycastle.version>1.64</bouncycastle.version>
+		<commons-fileupload.version>1.4</commons-fileupload.version>
+		<commons-io.version>2.6</commons-io.version>
+		<wst-jce-util.version>1.0.5.3</wst-jce-util.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>${bouncycastle.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-io.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>${commons-fileupload.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>${fastjson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commons.lang3.version}</version>
+		</dependency>
+
+		<!-- junit5 -->
+		<!--<dependency>-->
+		<!--    <groupId>org.junit.jupiter</groupId>-->
+		<!--    <artifactId>junit-jupiter</artifactId>-->
+		<!--    <version>${junit.version}</version>-->
+		<!--    &lt;!&ndash;依赖范围&ndash;&gt;-->
+		<!--    &lt;!&ndash;-->
+		<!--	   1、compile：编译依赖范围-->
+		<!--	   2、test：测试依赖范围-->
+		<!--	   3、provided：已提供的依赖范围；仅在清理、编译、-->
+		<!--	   4、runtime：运行时依赖范围，仅在测试和运行时有效-->
+		<!--	   5、system：系统提供的依赖，需要指定依赖文件路径-->
+		<!--	&ndash;&gt;-->
+		<!--    <scope>test</scope>-->
+		<!--</dependency>-->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<!--assebmly打包方式3：将所有依赖jar包编译进项目的最终jar包中，调用时只提供该输出包即可、
+			 1-使用install打包，将输出无依赖的jar包（mvn-package-demo-1.0.0.jar）调用时需一并提供其他的依赖jar包；
+					另一个是归档的jar包(名称mvn-package-demo-1.0.0-jar-with-dependencies.jar)，
+
+			 2-打包命令：mvn assembly:assembly -Dmaven.test.skip=true -Dmaven.javadoc.skip=true
+				查看这个jar包(mvn-package-demo-1.0.0.jar、mvn-package-demo-1.0.0-jar-with-dependencies.jar)，
+				可以看到有个lib文件夹，里面都是第三方依赖，此时的jar包由于包含第三方依赖，会比较大
+		 -->
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
