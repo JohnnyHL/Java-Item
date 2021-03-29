@@ -1,4 +1,4 @@
-<h1 align="center"><a href="https://github.com/JohnnyHL/Think-In-Java" target="_blank">Java Base Item</a></h1>
+<h1 align="center"><a href="https://github.com/JohnnyHL/Think-In-Java" target="_blank">Java-DesignPattern</a></h1>
 <p align="center">
   <a href="https://www.oracle.com/technetwork/java/javase/downloads/index.html"><img alt="JDK" src="https://img.shields.io/badge/JDK-1.8.0_162-orange.svg"/></a>
 </p>

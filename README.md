@@ -25,12 +25,12 @@
 
 ## 各 Module 介绍
 
-| Module 名称                            |     Module 介绍                        |
-| ---------------------------------------| ------------------------------------- |
-| [Java-Algorithm](./Java-Algorithm)     |  Java数据结构与算法分析                 |
-| [Java-BaseItem](./Java-BaseItem)       |  Java基础学习与总结                    |
-| [Java-DesignMode](./Java-DesignMode)   |  Java设计模式学习与总结                 |
-| [Java-LetCode](./Java-LetCode)         |  LetCode刷题汇总                       |
+| Module 名称                                   |     Module 介绍                        |
+| ----------------------------------------------| ------------------------------------- |
+| [Java-Algorithm](./Java-Algorithm)            |  Java数据结构与算法分析                 |
+| [Java-BaseItem](./Java-BaseItem)              |  Java基础学习与总结                    |
+| [Java-DesignPattern](./Java-DesignPattern)    |  Java设计模式学习与总结                 |
+| [Java-LetCode](./Java-LetCode)                |  LetCode刷题汇总                       |
 
 # 交流
 如果大家有兴趣，欢迎大家一起交流学习Java技术。学如逆水行舟，不进则退，技术有限，如果可以，会尽力给大家提供一些帮助，或是一些学习方法。
