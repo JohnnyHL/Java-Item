@@ -43,4 +43,4 @@
 <br/>
 **CSDN：https://blog.csdn.net/qq_27706119**
 <br/>
-**GitHub：https://github.com/JohnnyHL/Think-In-SpringBoot**
+**GitHub：https://github.com/JohnnyHL/Think-In-Java.git**
