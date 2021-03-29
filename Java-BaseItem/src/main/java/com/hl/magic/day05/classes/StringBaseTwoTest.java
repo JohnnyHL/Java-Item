@@ -1,4 +1,4 @@
-package com.hl.magic.keywords;
+package com.hl.magic.day05.classes;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -37,12 +37,4 @@ public class StringBaseTwoTest {
         LOGGER.debug("=====>{}", getenv);
     }
 
-
-    @Test
-    public void case11(){
-        String pwd1 = "11111111";
-        String pwd2 = "a1111111";
-        String pwd3 = "A1111111";
-        String pwd4 = "Aa111111";
-    }
 }

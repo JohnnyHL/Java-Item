@@ -1,4 +1,4 @@
-package com.hl.magic.keywords;
+package com.hl.magic.day05.classes;
 
 import org.junit.Test;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.hl.magic.day05.methods;
+package com.hl.magic.day05.classes;
 
 import java.util.Random;
 
@@ -8,7 +8,7 @@ import java.util.Random;
  *	�������飬����ӡ����Ԫ��
  *	���������
  */
-public class Method05_Random {
+public class Method04_Random {
 	public static void main(String[] args) {
 		//�������飬�洢����
 		String[] names = new String[10];

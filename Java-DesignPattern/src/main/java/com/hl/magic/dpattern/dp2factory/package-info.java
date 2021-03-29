@@ -1,0 +1,1 @@
+package com.hl.magic.dpattern.dp2factory;
