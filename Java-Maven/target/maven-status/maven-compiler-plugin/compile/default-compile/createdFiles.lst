@@ -1,0 +1,5 @@
+com\hl\magic\items\controller\SystemUser3Controller.class
+com\hl\magic\items\comman\ResponseMessage.class
+com\hl\magic\items\comman\ResponseStatus.class
+com\hl\magic\items\comman\BaseModel.class
+com\hl\magic\items\model\SystemUser.class

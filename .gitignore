@@ -1,7 +1,9 @@
 # directory
 /out/
+/log/
 /.idea/
 *.iml
+/target/
 
 # Compiled class file
 *.class

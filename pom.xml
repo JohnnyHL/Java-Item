@@ -38,7 +38,7 @@
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcprov-jdk15on</artifactId>
-			<version>${bouncycastle.version}</version>
+			<version>1.66</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -60,21 +60,20 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>${commons.lang3.version}</version>
 		</dependency>
-
 		<!-- junit5 -->
-		<!--<dependency>-->
-		<!--    <groupId>org.junit.jupiter</groupId>-->
-		<!--    <artifactId>junit-jupiter</artifactId>-->
-		<!--    <version>${junit.version}</version>-->
-		<!--    &lt;!&ndash;依赖范围&ndash;&gt;-->
-		<!--    &lt;!&ndash;-->
-		<!--	   1、compile：编译依赖范围-->
-		<!--	   2、test：测试依赖范围-->
-		<!--	   3、provided：已提供的依赖范围；仅在清理、编译、-->
-		<!--	   4、runtime：运行时依赖范围，仅在测试和运行时有效-->
-		<!--	   5、system：系统提供的依赖，需要指定依赖文件路径-->
-		<!--	&ndash;&gt;-->
-		<!--    <scope>test</scope>-->
+<!--		<dependency>-->
+<!--		    <groupId>org.junit.jupiter</groupId>-->
+<!--		    <artifactId>junit-jupiter</artifactId>-->
+<!--		    <version>${junit.version}</version>-->
+<!--		    &lt;!&ndash;依赖范围&ndash;&gt;-->
+<!--		    &lt;!&ndash;-->
+<!--			   1、compile：编译依赖范围-->
+<!--			   2、test：测试依赖范围-->
+<!--			   3、provided：已提供的依赖范围；仅在清理、编译、-->
+<!--			   4、runtime：运行时依赖范围，仅在测试和运行时有效-->
+<!--			   5、system：系统提供的依赖，需要指定依赖文件路径-->
+<!--			&ndash;&gt;-->
+<!--		    <scope>test</scope>-->
 		<!--</dependency>-->
 		<dependency>
 			<groupId>org.slf4j</groupId>
