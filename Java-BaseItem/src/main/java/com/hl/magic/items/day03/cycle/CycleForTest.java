@@ -77,4 +77,31 @@ public class CycleForTest {
             System.out.println();
         }
     }
+
+    @Test
+    public void test_continue(){
+        for (int i = 0; i < 5; i++) {
+            System.out.println("循环次数：" + i);
+            continue;
+        }
+        System.out.println("continue结束本次循环，但是还会继续执行剩下的循环内容");
+    }
+
+    @Test
+    public void test_break(){
+        for (int i = 0; i < 5; i++) {
+            System.out.println("循环次数：" + i);
+            break;
+        }
+        System.out.println("break结束循环，但是不再执行剩下的循环内容");
+    }
+
+    @Test
+    public void test_return(){
+        for (int i = 0; i < 5; i++) {
+            System.out.println("循环次数：" + i);
+            return;
+        }
+        System.out.println("return一个特定值，用于有返回值函数的方法");
+    }
 }

@@ -23,6 +23,11 @@
 			<artifactId>bcprov-ext-jdk15on</artifactId>
 			<version>1.65</version>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.7</version>
+		</dependency>
 	</dependencies>
 
 </project>

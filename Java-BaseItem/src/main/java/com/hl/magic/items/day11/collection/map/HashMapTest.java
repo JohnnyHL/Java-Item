@@ -1,6 +1,6 @@
 package com.hl.magic.items.day11.collection.map;
 
-import com.hl.magic.items.day11.collection.Person;
+import com.hl.magic.items.day11.collection.Person11;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -26,8 +26,8 @@ public class HashMapTest {
 
     @Test
     public void test_HashMap(){
-        Map<String, Person> map = new HashMap<>(16);
-        Person person = new Person();
+        Map<String, Person11> map = new HashMap<>(16);
+        Person11 person = new Person11();
         person.setId(UUID.randomUUID().toString().replace("-", ""));
         person.setAge(10);
         person.setName("小明");

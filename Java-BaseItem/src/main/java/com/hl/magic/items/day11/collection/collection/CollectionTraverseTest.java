@@ -1,6 +1,6 @@
 package com.hl.magic.items.day11.collection.collection;
 
-import com.hl.magic.items.day11.collection.Person;
+import com.hl.magic.items.day11.collection.Person11;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -49,11 +49,11 @@ public class CollectionTraverseTest {
      */
     @Test
     public void run3(){
-        List<Person> arr = new ArrayList<Person>();
-        arr.add(new Person("a",20));
-        arr.add(new Person("b",18));
-        arr.add(new Person("c",22));
-        for (Person person : arr) {
+        List<Person11> arr = new ArrayList<Person11>();
+        arr.add(new Person11("a",20));
+        arr.add(new Person11("b",18));
+        arr.add(new Person11("c",22));
+        for (Person11 person : arr) {
             System.out.println("人员信息：" + person);
         }
         for (Object obj : arr) {

@@ -1,4 +1,4 @@
-package com.hl.magic.items.day05.classes;
+package com.hl.magic.items.day05.methods.string;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -14,9 +14,9 @@ import java.util.UUID;
  * @author hl
  * @date 2020/5/7 10:06
  */
-public class StringBaseTest {
+public class StringBase1Demo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StringBaseTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StringBase1Demo.class);
 
     @Test
     public void splitTest() {

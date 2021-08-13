@@ -1,4 +1,4 @@
-package com.hl.magic.items.day05.methods;
+package com.hl.magic.items.day05.methods.methods;
 /**
  * ���������еĲ����������� 
  *	1.�����в����ǻ�����������

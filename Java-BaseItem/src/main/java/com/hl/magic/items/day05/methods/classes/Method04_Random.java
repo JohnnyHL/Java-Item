@@ -1,4 +1,4 @@
-package com.hl.magic.items.day05.classes;
+package com.hl.magic.items.day05.methods.classes;
 
 import java.util.Random;
 

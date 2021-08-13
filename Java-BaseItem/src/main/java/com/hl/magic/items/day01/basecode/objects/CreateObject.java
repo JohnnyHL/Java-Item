@@ -19,7 +19,7 @@ public class CreateObject {
      */
     public static void fun1() {
 
-        Person person = new Person();
+        Person01 person = new Person01();
         person.setName("Jack");
         person.setAge(17);
 
@@ -34,7 +34,7 @@ public class CreateObject {
      */
     public static void fun2() {
         try {
-            Person person = Person.class.newInstance();
+            Person01 person = Person01.class.newInstance();
             person.setName("Rose");
             person.setAge(18);
             System.out.println("====>[2]class类的newInstance方法创建对象");
@@ -54,8 +54,8 @@ public class CreateObject {
      */
     public static void fun3() {
         try {
-            Constructor<Person> constructor = Person.class.getConstructor();
-            Person person = constructor.newInstance();
+            Constructor<Person01> constructor = Person01.class.getConstructor();
+            Person01 person = constructor.newInstance();
             person.setName("Johnny");
             person.setAge(19);
 
@@ -77,10 +77,10 @@ public class CreateObject {
     public static void fun4() {
         try {
             //new一个Person对象出来
-            Person person = new Person();
+            Person01 person = new Person01();
 
             //克隆一个Person对象出来
-            Person clone = person.clone();
+            Person01 clone = person.clone();
 
             clone.setName("克隆羊");
             clone.setAge(16);
@@ -101,7 +101,7 @@ public class CreateObject {
     public static void fun5() {
         try {
             ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("E://Study//Test//data.obj"));
-            Person person = (Person) inputStream.readObject();
+            Person01 person = (Person01) inputStream.readObject();
 
             person.setName("反序列化");
             person.setAge(20);

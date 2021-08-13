@@ -5,7 +5,7 @@ package com.hl.magic.items.day11.collection;
  *
  * @author hl
  */
-public class Person {
+public class Person11 {
 
     private String id;
 
@@ -13,16 +13,16 @@ public class Person {
 
     private int age;
 
-    public Person() {
+    public Person11() {
 
     }
 
-    public Person(String name, int age) {
+    public Person11(String name, int age) {
         this.name = name;
         this.age = age;
     }
 
-    public Person(String id, String name, int age) {
+    public Person11(String id, String name, int age) {
         this.id = id;
         this.name = name;
         this.age = age;

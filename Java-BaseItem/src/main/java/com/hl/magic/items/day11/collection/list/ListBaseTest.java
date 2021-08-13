@@ -1,6 +1,6 @@
 package com.hl.magic.items.day11.collection.list;
 
-import com.hl.magic.items.day11.collection.Person;
+import com.hl.magic.items.day11.collection.Person11;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -142,8 +142,8 @@ public class ListBaseTest {
      */
     @Test
     public void test_run2() {
-        List<Person> list = new ArrayList<>();
-        Person person = new Person();
+        List<Person11> list = new ArrayList<>();
+        Person11 person = new Person11();
         person.setId("2c3875b2781841d4ab9b971a2de6665e");
         person.setName("小明");
         person.setAge(18);
@@ -157,7 +157,7 @@ public class ListBaseTest {
     @Test
     public void run2() {
         Map<String, Object> map = new HashMap<>(16);
-        Person person = new Person();
+        Person11 person = new Person11();
         person.setId("2c3875b2781841d4ab9b971a2de6665e");
         person.setName("小明");
         person.setAge(18);

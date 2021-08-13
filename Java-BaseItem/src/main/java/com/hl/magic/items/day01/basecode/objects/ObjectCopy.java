@@ -11,9 +11,9 @@ public class ObjectCopy {
     public static void testClone(){
         try {
             //new一个Person对象出来
-            Person person = new Person("xiaoming",12);
+            Person01 person = new Person01("xiaoming",12);
             //克隆一个Person对象出来
-            Person clone = (Person) person.clone();
+            Person01 clone = (Person01) person.clone();
 
             System.out.println(clone.getName()==person.getName() ? "是同一个对象啊怎么办":"不是同一个");
         } catch (CloneNotSupportedException e) {

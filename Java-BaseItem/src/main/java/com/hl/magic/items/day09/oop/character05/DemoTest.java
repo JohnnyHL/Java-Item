@@ -46,9 +46,4 @@ public class DemoTest {
     public void case4() {
         Person1 person11 = new Person1("001", "小明");
     }
-
-    @Test
-    public void case5() {
-        Person1 person11 = new Person1("001", "小明");
-    }
 }

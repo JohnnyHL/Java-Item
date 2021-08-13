@@ -1,4 +1,4 @@
-package com.hl.magic.items.day05.classes;
+package com.hl.magic.items.day05.methods.string;
 
 import org.junit.Test;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * @author hl
  * @date 2020/3/18 16:15
  */
-public class StringAdvanceTest {
+public class StringAdvanceDemo {
 
     @Test
     public void fun1() {
