@@ -18,5 +18,10 @@
 			<version>4.13.2</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-ext-jdk15on</artifactId>
+			<version>1.65</version>
+		</dependency>
 	</dependencies>
 </project>
