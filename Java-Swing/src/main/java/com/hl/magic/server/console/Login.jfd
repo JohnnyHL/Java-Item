@@ -1,0 +1,72 @@
+JFDML JFormDesigner: "7.0.4.0.360" Java: "11.0.10" encoding: "UTF-8"
+
+new FormModel {
+	"i18n.autoExternalize": true
+	"i18n.bundlePackage": "com.hl.magic.server"
+	"i18n.bundleName": "Login"
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormWindow( "javax.swing.JFrame", new FormLayoutManager( class java.awt.BorderLayout ) ) {
+			name: "this"
+			"title": "登录"
+			"background": new java.awt.Color( 131, 151, 208, 255 )
+			"$sizePolicy": 1
+			"$locationPolicy": 1
+			"defaultCloseOperation": 3
+			add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.BorderLayout ) ) {
+				name: "dialogPane"
+				"border": new javax.swing.border.LineBorder( sfield java.awt.Color black, 1, false )
+				"background": new java.awt.Color( 131, 151, 208, 255 )
+				add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class org.jdesktop.layout.GroupLayout ) {
+					"$horizontalGroup": "par l {seq l {space :::p, comp panel1:::p::p, space :::x}}"
+					"$verticalGroup": "par l {seq t {space :::x, comp panel1:::p::p, space :::p}}"
+				} ) {
+					name: "contentPanel"
+					"background": new java.awt.Color( 131, 151, 208, 255 )
+					"maximumSize": new java.awt.Dimension( 400, 250 )
+					"minimumSize": new java.awt.Dimension( 400, 2503 )
+					"border": new javax.swing.border.LineBorder( new javax.swing.plaf.ColorUIResource( 238, 238, 238 ), 1, false )
+					add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class org.jdesktop.layout.GroupLayout ) {
+						"$horizontalGroup": "par l {seq {space :p:65:p, par t {comp label2:::p::p, comp label1:::p::p}, space s:::p, par l {comp okButton:::p:81:p, comp comboBox1::l:p:128:p, comp passwordField1::l:p:128:p}, space ::94:x}}"
+						"$verticalGroup": "par l {seq l {space :p:28:p, par b {comp label1::b:p::p, comp comboBox1::b:p::p}, space :::p, par b {comp label2::b:p::p, comp passwordField1::b:p::p}, space s:::p, comp okButton:::p::p, space ::76:x}}"
+					} ) {
+						name: "panel1"
+						"background": new java.awt.Color( 131, 158, 208, 255 )
+						add( new FormComponent( "javax.swing.JComboBox" ) {
+							name: "comboBox1"
+							"model": new javax.swing.DefaultComboBoxModel {
+								selectedItem: "超级管理员"
+								addElement( "超级管理员" )
+								addElement( "审计员" )
+								addElement( "管理员" )
+							}
+						} )
+						add( new FormComponent( "javax.swing.JPasswordField" ) {
+							name: "passwordField1"
+						} )
+						add( new FormComponent( "javax.swing.JButton" ) {
+							name: "okButton"
+							"text": "确定"
+							addEvent( new FormEvent( "java.awt.event.ActionListener", "actionPerformed", "okButtonActionPerformed", true ) )
+						} )
+						add( new FormComponent( "javax.swing.JLabel" ) {
+							name: "label1"
+							"text": "用户名"
+						} )
+						add( new FormComponent( "javax.swing.JLabel" ) {
+							name: "label2"
+							"text": "口令"
+						} )
+					} )
+				}, new FormLayoutConstraints( class java.lang.String ) {
+					"value": "Center"
+				} )
+			}, new FormLayoutConstraints( class java.lang.String ) {
+				"value": "Center"
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 0, 0 )
+			"size": new java.awt.Dimension( 400, 300 )
+		} )
+	}
+}
